@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>聊天室</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewpoint" content="width=device-width,initial-scale=1.0">
+    <!-- 引入bootstrap样式 -->
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css" rel="stylesheet" media="screen">
+    <!--<link href="WEB-INF/bootstrap-3.3.7-dist/css/bootstrap.css" rel="stylesheet" media="screen">-->
+
+    <!-- 引入bootstrap-table样式 -->
+    <link href="https://cdn.bootcss.com/bootstrap-table/1.11.1/bootstrap-table.min.css" rel="stylesheet">
+
+    <style type="text/css">
+        #message {
+            margin-top: 20px;
+            border: 1px solid gray;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Hello World!</h1>
+
+昵称：<input type="text" id="nickname">
+<button type="button" onclick="connectWebSocket()">连接WebSocket</button>
+<button type="button" onclick="closeWebSocket()">断开WebSocket</button>
+
+<br>
+
+消息：<input id="text" type="text">
+频道号：<input id="toUser" type="text">
+<button type="button" onclick="send()">发送消息</button>
+<div id="message"></div>
+
+<script type="text/javascript">
+    var websocket = null;
+
+    var nickname = null;
+
+    function connectWebSocket() {
+        nickname = document.getElementById("nickname").value;
+        if (nickname == "") {
+            alert("请输入昵称");
+            return;
+        }
+
+        //判断当前的浏览器是否支持WebSocket。
+        if ("WebSocket" in window) {
+            //这个/websocket地方需要和MySocket对象中ServerEndpoint中的值是对应的
+            websocket_view = new WebSocket("ws://localhost:8080/websocket/" + nickname)
+        } else {
+            alert("Not Support websocket");
+            return false;
+        }
+
+        websocket_view.onopen = function (event) {
+            setMessageHtml("Loc Msg:连接成功");
+        };
+
+        websocket_view.onclose = function (event) {
+            setMessageHtml("Loc Msg:连接关闭")
+        };
+
+        websocket_view.onerror = function (event) {
+            setMessageHtml("Loc Msg:连接异常")
+        };
+
+        websocket_view.onmessage = function (event) {
+            setMessageHtml(event.data)
+        }
+
+    }
+
+
+    function setMessageHtml(msg) {
+        var message = document.getElementById("message");
+        message.innerHTML += msg + '<br>';
+    }
+
+    function send() {
+        var message = document.getElementById("text").value;
+        var toUser = document.getElementById("toUser").value;
+        var socketMsg = {msg:message,toUser:toUser};
+        if(toUser == ""){
+            socketMsg.type = 0;//群聊
+        }else{
+            socketMsg.type = 1;//单聊
+
+        }
+//        websocket.send(nickname + ":" + message);这种方式昵称没法提取出来，所以一般不用
+        websocket_view.send(JSON.stringify(socketMsg));
+    }
+</script>
+
+<!-- jquery -->
+<!--<script src="WEB-INF/bootstrap-3.3.7-dist/js/jquery-3.3.1.js"></script>-->
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+<!--<script src="WEB-INF/bootstrap-3.3.7-dist/js/bootstrap.js"></script>-->
+<script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.js"></script>
+<!-- bootstrap-table.min.js -->
+<script src="https://cdn.bootcss.com/bootstrap-table/1.11.1/bootstrap-table.min.js"></script>
+<!-- 引入中文语言包 -->
+<script src="https://cdn.bootcss.com/bootstrap-table/1.11.1/locale/bootstrap-table-zh-CN.min.js"></script>
+</body>
+</html>
